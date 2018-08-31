@@ -1,3 +1,7 @@
+#This script collects gpsd data
+#Made for Python 2.7 due to legacy gpsd module
+#Alexander Stadelmann
+
 from gps import *
 import time
 import threading
