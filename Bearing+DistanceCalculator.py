@@ -1,4 +1,5 @@
 #Calculates the bearing and distance between two GPS coordinates
+#Made for Python 2.7 due to legacy gpsd module
 #Alexander Stadelmann
 
 import math
@@ -24,5 +25,5 @@ def Calc(x1, y1, x2, y2, Deltax, Deltay):
     calc = (bearing, distance)
     return calc
 
-print(Calc(x1, y1, x2, y2, Deltax, Deltay)[0])
-print(Calc(x1, y1, x2, y2, Deltax, Deltay)[1])
+print Calc(x1, y1, x2, y2, Deltax, Deltay)[0]
+print Calc(x1, y1, x2, y2, Deltax, Deltay)[1]
