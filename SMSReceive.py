@@ -3,6 +3,11 @@ import time
 
 ser = serial.Serial("/dev/tty/s0", 115200)
 
+#This script receives and parses GPSdata from a SMS
+#Made for Python 2.7 due to legacy gpsd module
+#Alexander Stadelmann
+
+
 #Functionality Check
 ser.write("AT")
 read = ser.readline()
@@ -14,24 +19,24 @@ else:
 ser.write("AT+CPIN?")
 read = ser.readline()
 if read = "+CPIN: READY":
-    print("SIM OK")
+    print "SIM OK"
 else:
     raise KeyboardInterrupt("SIM not connected!")
 
 #Tracker SMS check
 def SMSCheck():
     while True:
-        ser.write("AT+CMGR=1")
+        ser.write "AT+CMGR=1"
         read = ser.readline()
         if "UNREAD" in read:
-            print("Unread SMS arrived")
+            print "Unread SMS arrived"
             if "Help me" in read:
-                print("SMS is from tracker")
+                print "SMS is from tracker" 
                 message = read
                 return message
                 break
             else:
-                print("SMS is not from tracker, aborting!")
+                print "SMS is not from tracker, aborting!" 
         time.sleep(20)
 
 #SMS Parser
