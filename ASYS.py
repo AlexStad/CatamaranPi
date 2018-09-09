@@ -115,6 +115,20 @@ class ASYS:
         global SMSCoords
         SMSCoords = (float(x2), float(y2))
         return SMSCoords
+    
+    def RTB(self):
+        global Coords
+        Coords = (47.123442, 8.775506)
+        while ObjectiveDistance > 0.01:
+            try:
+                Calc = ASYS.Calc(self)
+            except:
+                print("ERROR: Distance and Bearing calculation interrupted.")
+                print("Initiating Emergency Stop.")
+                print("Attemting to restart.")
+            print("Bearing Delta: \t", Calc[0], "deg")
+            print("Distance: \t", Calc[1], "km\n") 
+            time.sleep(20)
 
 
 #Launch
