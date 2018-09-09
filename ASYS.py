@@ -121,11 +121,18 @@ class ASYS:
         ymessage2 = float(ymessage2)/60
         y2 = (float(ymessage1) + float(ymessage2))
         print("SMS Y Coordinates: ", y2)
+<<<<<<< HEAD
         global Coords
         Coords = (float(x2), float(y2))
         return Coords
 
 
+=======
+        global SMSCoords
+        SMSCoords = (float(x2), float(y2))
+        return SMSCoords
+    
+>>>>>>> f4217613dbc4e39b0755c0e9387030645bd4eb62
     def RTB(self):
         global Coords
         Coords = (47.123442, 8.775506)
@@ -137,7 +144,11 @@ class ASYS:
                 print("Initiating Emergency Stop.")
                 print("Attemting to restart.")
             print("Bearing Delta: \t", Calc[0], "deg")
+<<<<<<< HEAD
             print("Distance: \t", Calc[1], "km\n")
+=======
+            print("Distance: \t", Calc[1], "km\n") 
+>>>>>>> f4217613dbc4e39b0755c0e9387030645bd4eb62
             time.sleep(20)
 
 
