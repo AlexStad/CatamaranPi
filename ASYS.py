@@ -5,6 +5,9 @@ import serial
 import time
 import math
 
+
+
+
 ser = serial.Serial("/dev/ttyS0", 115200, timeout=1)
 Coords = ""
 ObjectiveDistance = 42
@@ -28,6 +31,7 @@ class ASYS:
             print("Distance: \t", Calc[1], "km\n")
             time.sleep(20)
 
+
     def PrelaunchChecks(self):
         while "OK" not in ASYS.SerialCOM(self, "AT"):   #General COM Check
             print("ERROR: Device does not respond.")
@@ -42,6 +46,7 @@ class ASYS:
             print("ERROR: GPRS does not respond to changed message format.")
             time.sleep(20)
 
+
     def SerialCOM(self, text):                #Communicates Commands
         text = text + "\r\n"
         ser.write(text.encode())
@@ -51,6 +56,7 @@ class ASYS:
             while ser.inWaiting() > 0:
                 data += (ser.read(ser.inWaiting())).decode()
         return data
+
 
     def GPSInfo(self, bracket):             #Fetches GPS info
         check = "0"
@@ -65,6 +71,7 @@ class ASYS:
                 time.sleep(20)
         info = GPS.split(",")[bracket]      #Parsing info
         return info
+
 
     def Calc(self):               #Calculates Bearing and Distance
         GPS = ASYS.GPSInfo(self, slice(3,8))
@@ -86,6 +93,7 @@ class ASYS:
         calc = (deltabearing, distance)
         return calc
 
+
     def SMSCheck(self):
         while True:
             SMS = ASYS.SerialCOM(self, "AT+CMGL=\"REC UNREAD\"")
@@ -96,6 +104,7 @@ class ASYS:
                 return SMS
                 break
             time.sleep(20)
+
 
     def SMS(self):
         print("SMS Reception activated.")
@@ -116,6 +125,7 @@ class ASYS:
         Coords = (float(x2), float(y2))
         return Coords
 
+
     def RTB(self):
         global Coords
         Coords = (47.123442, 8.775506)
@@ -129,6 +139,7 @@ class ASYS:
             print("Bearing Delta: \t", Calc[0], "deg")
             print("Distance: \t", Calc[1], "km\n")
             time.sleep(20)
+
 
     def StandBy(self):
         global Coords
