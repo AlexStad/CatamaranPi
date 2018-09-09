@@ -1,51 +1,58 @@
 #Autonomous System (ASYS)
 #SMSRecieve + GPSLocationData + Bearing+DistanceCalculator
 
-
 import serial
 import time
 import math
 
 ser = serial.Serial("/dev/ttyS0", 115200, timeout=1)
 SMSCoords = ""
-ObjectiveDistance = 1701
+ObjectiveDistance = 42
 
 class ASYS:
     
     def __init__(self):
-        print("Starting...")
+        print("Starting.")
         ASYS.PrelaunchChecks(self)
         print("Prelaunch Checks completed.")
         ASYS.SMS(self)
-        print("SMS received and parsed. Initiating start up.")
-        while Distance > 20:
-            start_time = time.time()
-            print(ASYS.Calc(self))
-            print("--- %s seconds ---" % (time.time() - start_time))
+        print("SMS parsed.\nInitiating start up sequence.\n")
+        while ObjectiveDistance > 0.01:
+            try:
+                Calc = ASYS.Calc(self)
+            except:
+                print("ERROR: Distance and Bearing calculation interrupted.")
+                print("Initiating Emergency Stop.")
+                print("Attemting to restart.")
+            print("Bearing Delta: \t", Calc[0], "deg")
+            print("Distance: \t", Calc[1], "km\n") 
             time.sleep(20)
-            
-        
     
     def PrelaunchChecks(self):                           
-        while "OK" not in ASYS.SerialCOM(self, "AT"):                  #General COM Check
+        while "OK" not in ASYS.SerialCOM(self, "AT"):   #General COM Check
+            print("ERROR: Device does not respond.")
             time.sleep(20)
-        while "OK" not in ASYS.SerialCOM(self, "AT+CGNSPWR=1"):        #GPS Power Activation
+        while "OK" not in ASYS.SerialCOM(self, "AT+CGNSPWR=1"): #GPS Activation
+            print("ERROR: GNSS does not respond to power up command")
             time.sleep(20)
-        print("yep")
-        while "READY" not in ASYS.SerialCOM(self, "AT+CPIN?"):         #SIM/GSM Check
+        while "READY" not in ASYS.SerialCOM(self, "AT+CPIN?"):  #SIM/GSM Check
+            print("ERROR: SIM does not respond.")
+            time.sleep(20)
+        while "OK" not in ASYS.SerialCOM(self, "AT+CMGF=1"):    #Set MSG Format to Text       
+            print("ERROR: GPRS does not respond to changed message format.")
             time.sleep(20)
 
     def SerialCOM(self, text):                #Communicates Commands
         text = text + "\r\n"
         ser.write(text.encode())
         data = ""
-        time.sleep(2)
+        time.sleep(1)
         while ser.inWaiting() != 0:
             while ser.inWaiting() > 0:
                 data += (ser.read(ser.inWaiting())).decode()
         return data
 
-    def GPSInfo(self, bracket):                                   #Fetches GPS info
+    def GPSInfo(self, bracket):             #Fetches GPS info
         check = "0"
         while check != "1":
             GPS = ASYS.SerialCOM(self, "AT+CGNSINF")
@@ -57,7 +64,6 @@ class ASYS:
             else:
                 time.sleep(20)
         info = GPS.split(",")[bracket]      #Parsing info
-
         return info
 
     def Calc(self):               #Calculates Bearing and Distance
@@ -74,7 +80,7 @@ class ASYS:
         a = math.pow(math.sin(Deltax/2), 2) + math.cos(x1) * math.cos(x2) * math.pow(math.sin(Deltay / 2), 2) 
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
         distance = 6371 * c
-        deltabearing = bearing - GPS[4]
+        deltabearing = bearing - float(GPS[4])
         global ObjectiveDistance
         ObjectiveDistance = distance
         calc = (deltabearing, distance)
@@ -82,35 +88,32 @@ class ASYS:
 
     def SMSCheck(self):
         while True:
-            SMS = ASYS.SerialCOM(self, "AT+CMGR=1")
-            if "UNREAD" in SMS:
-                print("Unread SMS arrived")
-                if "Help me" in SMS:
-                    print("SMS is from tracker") 
-                    return SMS
-                    break
-                else:
-                    print("SMS is not from tracker, aborting!")
+            SMS = ASYS.SerialCOM(self, "AT+CMGL=\"REC UNREAD\"")
+            IDText = "Help Me"
+            if IDText in SMS:
+                print("Unread SMS from tracker received.") 
+                SMS = SMS[SMS.find(IDText):len(SMS)]
+                return SMS
+                break
             time.sleep(20)
 
     def SMS(self):
-        print("SMS")
+        print("SMS Reception activated.")
         message = ASYS.SMSCheck(self).split(",")
-        print(message)
         xmessage = message[5]
         ymessage = message[7]
-        xmessage1 = xmessage[0:1]
-        xmessage2 = xmessage[2:6]
+        xmessage1 = xmessage[:-7]
+        xmessage2 = xmessage[-7:]
         xmessage2 = float(xmessage2)/60
-        x2= float(xmessage1 + "." + xmessage2)
-        print(x2)
-        ymessage1 = ymessage[0:1]
-        ymessage2 = ymessage[2:6]
+        x2 = float(xmessage1) + float(xmessage2)
+        print("SMS X Coordinates: ", x2)
+        ymessage1 = ymessage[:-7]
+        ymessage2 = ymessage[-7:]
         ymessage2 = float(ymessage2)/60
-        y2= float(ymessage1 + "." + ymessage2)
-        print(y2)
+        y2 = (float(ymessage1) + float(ymessage2))
+        print("SMS Y Coordinates: ", y2)
         global SMSCoords
-        SMSCoords = (x2, y2)
+        SMSCoords = (float(x2), float(y2))
         return SMSCoords
 
 
