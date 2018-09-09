@@ -6,11 +6,11 @@ import time
 import math
 
 ser = serial.Serial("/dev/ttyS0", 115200, timeout=1)
-SMSCoords = ""
+Coords = ""
 ObjectiveDistance = 42
 
 class ASYS:
-    
+
     def __init__(self):
         print("Starting.")
         ASYS.PrelaunchChecks(self)
@@ -25,10 +25,10 @@ class ASYS:
                 print("Initiating Emergency Stop.")
                 print("Attemting to restart.")
             print("Bearing Delta: \t", Calc[0], "deg")
-            print("Distance: \t", Calc[1], "km\n") 
+            print("Distance: \t", Calc[1], "km\n")
             time.sleep(20)
-    
-    def PrelaunchChecks(self):                           
+
+    def PrelaunchChecks(self):
         while "OK" not in ASYS.SerialCOM(self, "AT"):   #General COM Check
             print("ERROR: Device does not respond.")
             time.sleep(20)
@@ -38,7 +38,7 @@ class ASYS:
         while "READY" not in ASYS.SerialCOM(self, "AT+CPIN?"):  #SIM/GSM Check
             print("ERROR: SIM does not respond.")
             time.sleep(20)
-        while "OK" not in ASYS.SerialCOM(self, "AT+CMGF=1"):    #Set MSG Format to Text       
+        while "OK" not in ASYS.SerialCOM(self, "AT+CMGF=1"):    #Set MSG Format to Text
             print("ERROR: GPRS does not respond to changed message format.")
             time.sleep(20)
 
@@ -70,14 +70,14 @@ class ASYS:
         GPS = ASYS.GPSInfo(self, slice(3,8))
         x1 = math.radians(float(GPS[0]))    #fetches longitude from GPS
         y1 = math.radians(float(GPS[1]))    #same, but latitude
-        x2 = math.radians(float(SMSCoords[0]))
-        y2 = math.radians(float(SMSCoords[1]))
+        x2 = math.radians(float(Coords[0]))
+        y2 = math.radians(float(Coords[1]))
         Deltax = abs(abs(x1)-abs(x2))
         Deltay = abs(abs(y1)-abs(y2))
         x = math.cos(x2) * math.sin(Deltay)
         y = math.cos(x1) * math.sin(x2) - math.sin(x1) * math.cos(x2) * math.cos(abs(abs(y1)-abs(y2)))
         bearing = (math.degrees(math.atan2(x, y)) + 360) % 360
-        a = math.pow(math.sin(Deltax/2), 2) + math.cos(x1) * math.cos(x2) * math.pow(math.sin(Deltay / 2), 2) 
+        a = math.pow(math.sin(Deltax/2), 2) + math.cos(x1) * math.cos(x2) * math.pow(math.sin(Deltay / 2), 2)
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
         distance = 6371 * c
         deltabearing = bearing - float(GPS[4])
@@ -91,7 +91,7 @@ class ASYS:
             SMS = ASYS.SerialCOM(self, "AT+CMGL=\"REC UNREAD\"")
             IDText = "Help Me"
             if IDText in SMS:
-                print("Unread SMS from tracker received.") 
+                print("Unread SMS from tracker received.")
                 SMS = SMS[SMS.find(IDText):len(SMS)]
                 return SMS
                 break
@@ -112,10 +112,37 @@ class ASYS:
         ymessage2 = float(ymessage2)/60
         y2 = (float(ymessage1) + float(ymessage2))
         print("SMS Y Coordinates: ", y2)
-        global SMSCoords
-        SMSCoords = (float(x2), float(y2))
-        return SMSCoords
+        global Coords
+        Coords = (float(x2), float(y2))
+        return Coords
 
+    def RTB(self):
+        global Coords
+        Coords = (47.123442, 8.775506)
+        while ObjectiveDistance > 0.01:
+            try:
+                Calc = ASYS.Calc(self)
+            except:
+                print("ERROR: Distance and Bearing calculation interrupted.")
+                print("Initiating Emergency Stop.")
+                print("Attemting to restart.")
+            print("Bearing Delta: \t", Calc[0], "deg")
+            print("Distance: \t", Calc[1], "km\n")
+            time.sleep(20)
+
+    def StandBy(self):
+        global Coords
+        Coords = (47.120697, 8.786875)
+        while ObjectiveDistance > 0.01:
+            try:
+                Calc = ASYS.Calc(self)
+            except:
+                print("ERROR: Distance and Bearing calculation interrupted.")
+                print("Initiating Emergency Stop.")
+                print("Attemting to restart.")
+            print("Bearing Delta: \t", Calc[0], "deg")
+            print("Distance: \t", Calc[1], "km\n")
+            time.sleep(20)
 
 #Launch
 
