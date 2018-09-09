@@ -20,16 +20,7 @@ class ASYS:
         print("Prelaunch Checks completed.")
         ASYS.SMS(self)
         print("SMS parsed.\nInitiating start up sequence.\n")
-        while ObjectiveDistance > 0.01:
-            try:
-                Calc = ASYS.Calc(self)
-            except:
-                print("ERROR: Distance and Bearing calculation interrupted.")
-                print("Initiating Emergency Stop.")
-                print("Attemting to restart.")
-            print("Bearing Delta: \t", Calc[0], "deg")
-            print("Distance: \t", Calc[1], "km\n")
-            time.sleep(20)
+        ASYS.EXEC(self)
 
 
     def PrelaunchChecks(self):
@@ -92,6 +83,20 @@ class ASYS:
         ObjectiveDistance = distance
         calc = (deltabearing, distance)
         return calc
+    
+    
+    def Exec(self):
+        while ObjectiveDistance > 0.01:
+            try:
+                Calc = ASYS.Calc(self)
+            except:
+                print("ERROR: Distance and Bearing calculation interrupted.")
+                print("Initiating Emergency Stop.")
+                print("Attemting to restart.")
+            print("Bearing Delta: \t", Calc[0], "deg")
+            print("Distance: \t", Calc[1], "km\n")
+            time.sleep(20)
+
 
 
     def SMSCheck(self):
@@ -129,31 +134,12 @@ class ASYS:
     def RTB(self):
         global Coords
         Coords = (47.123442, 8.775506)
-        while ObjectiveDistance > 0.01:
-            try:
-                Calc = ASYS.Calc(self)
-            except:
-                print("ERROR: Distance and Bearing calculation interrupted.")
-                print("Initiating Emergency Stop.")
-                print("Attemting to restart.")
-            print("Bearing Delta: \t", Calc[0], "deg")
-            print("Distance: \t", Calc[1], "km\n")
-            time.sleep(20)
-
+        ASYS.EXEC(self)
 
     def StandBy(self):
         global Coords
         Coords = (47.120697, 8.786875)
-        while ObjectiveDistance > 0.01:
-            try:
-                Calc = ASYS.Calc(self)
-            except:
-                print("ERROR: Distance and Bearing calculation interrupted.")
-                print("Initiating Emergency Stop.")
-                print("Attemting to restart.")
-            print("Bearing Delta: \t", Calc[0], "deg")
-            print("Distance: \t", Calc[1], "km\n")
-            time.sleep(20)
+        ASYS.EXEC(self)
 
             
 #Launch
