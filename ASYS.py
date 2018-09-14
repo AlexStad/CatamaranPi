@@ -1,25 +1,23 @@
-#Autonomous System (ASYS)
-#SMSRecieve + GPSLocationData + Bearing+DistanceCalculator
+# Autonomous System (ASYS)
+# SMSRecieve + GPSLocationData + Bearing+DistanceCalculator
 
 import serial
 import time
 import math
 
 
+ser = serial.Serial("/dev/ttyS0", 115200, timeout=1)    # Serial Set-up
 
-
-ser = serial.Serial("/dev/ttyS0", 115200, timeout=1)    #Serial Set-up
-
-Coords = ""                     #Variable setting
+Coords = ""                     # Variable setting
 TurnCoords = ""
 SMSCoords = ""
 ObjectiveDistance = 42
 
-X1 = round(47.129780, 4)    #Routing line coordinates
-Y1 = round(8.781155, 4)     #Only in middle of Sihlsee!
+X1 = round(47.129780, 4)    # Routing line coordinates
+Y1 = round(8.781155, 4)     # Only in middle of Sihlsee!
 X2 = round(47.101284, 4)
 Y2 = round(8.796171, 4)
-DeltaX = X2-X1              #GPSLine List Calculations
+DeltaX = X2-X1              # GPSLine List Calculations
 DeltaY = Y2-Y1
 DivX = -0.0001
 DivY = (DeltaY/DeltaX) * DivX
@@ -55,12 +53,10 @@ class ASYS:
         print("Setting Base coordinates.")
         ASYS.RTB(self)
 
-
-
-
     def Mission(self):
         global Coords
         global SMSCoords
+        global TurnCoords
         print("Mission started.")
         ASYS.SMS(self)
         print("SMS parsed.\nRouting.\n")
@@ -84,13 +80,11 @@ class ASYS:
         ASYS.StandBy(self)
         print("Arrived at Stand-By position.\nRestarting Mission.")
 
-
-
     def EXEC(self):
         while ObjectiveDistance > 0.01:
             try:
                 Calc = ASYS.Calc(self)
-            except:
+            except Exception:
                 print("ERROR: Distance and Bearing calculation interrupted.")
                 print("Initiating Emergency Stop.")
                 print("Attemting to restart.")
@@ -98,24 +92,21 @@ class ASYS:
             print("Distance: \t", Calc[1], "km\n")
             time.sleep(20)
 
-
-
     def PrelaunchChecks(self):
-        while "OK" not in ASYS.SerialCOM(self, "AT"):   #General COM Check
+        while "OK" not in ASYS.SerialCOM(self, "AT"):   # General COM Check
             print("ERROR: Device does not respond.")
             time.sleep(20)
-        while "OK" not in ASYS.SerialCOM(self, "AT+CGNSPWR=1"): #GPS Activation
+        while "OK" not in ASYS.SerialCOM(self, "AT+CGNSPWR=1"):  # GPS Power On
             print("ERROR: GNSS does not respond to power up command")
             time.sleep(20)
-        while "READY" not in ASYS.SerialCOM(self, "AT+CPIN?"):  #SIM/GSM Check
+        while "READY" not in ASYS.SerialCOM(self, "AT+CPIN?"):  # SIM/GSM Check
             print("ERROR: SIM does not respond.")
             time.sleep(20)
-        while "OK" not in ASYS.SerialCOM(self, "AT+CMGF=1"):    #Set MSG Format to Text
+        while "OK" not in ASYS.SerialCOM(self, "AT+CMGF=1"):    # MSG Format
             print("ERROR: GPRS does not respond to changed message format.")
             time.sleep(20)
 
-
-    def SerialCOM(self, text):                #Communicates Commands
+    def SerialCOM(self, text):                # Communicates Commands
         text = text + "\r\n"
         ser.write(text.encode())
         data = ""
@@ -125,34 +116,34 @@ class ASYS:
                 data += (ser.read(ser.inWaiting())).decode()
         return data
 
-
-    def GPSInfo(self, bracket):             #Fetches GPS info
+    def GPSInfo(self, bracket):             # Fetches GPS info
         check = "0"
         while check != "1":
             GPS = ASYS.SerialCOM(self, "AT+CGNSINF")
-            if "OK" in GPS:              #GPS COM Check
-                if "1" in GPS.split(",")[1]:     #GPS FIX Check
+            if "OK" in GPS:              # GPS COM Check
+                if "1" in GPS.split(",")[1]:     # GPS FIX Check
                     check = "1"
                 else:
                     time.sleep(20)
             else:
                 time.sleep(20)
-        info = GPS.split(",")[bracket]      #Parsing info
+        info = GPS.split(",")[bracket]      # Parsing info
         return info
 
-
-    def Calc(self):               #Calculates Bearing and Distance
-        GPS = ASYS.GPSInfo(self, slice(3,8))
-        x1 = math.radians(float(GPS[0]))    #fetches longitude from GPS
-        y1 = math.radians(float(GPS[1]))    #same, but latitude
+    def Calc(self):               # Calculates Bearing and Distance
+        GPS = ASYS.GPSInfo(self, slice(3, 8))
+        x1 = math.radians(float(GPS[0]))    # fetches longitude from GPS
+        y1 = math.radians(float(GPS[1]))    # same, but latitude
         x2 = math.radians(float(Coords[0]))
         y2 = math.radians(float(Coords[1]))
         Deltax = abs(abs(x1)-abs(x2))
         Deltay = abs(abs(y1)-abs(y2))
         x = math.cos(x2) * math.sin(Deltay)
-        y = math.cos(x1) * math.sin(x2) - math.sin(x1) * math.cos(x2) * math.cos(abs(abs(y1)-abs(y2)))
+        y = math.cos(x1) * math.sin(x2) - math.sin(x1) * math.cos(x2)
+        y = y * math.cos(abs(abs(y1)-abs(y2)))
         bearing = (math.degrees(math.atan2(x, y)) + 360) % 360
-        a = math.pow(math.sin(Deltax/2), 2) + math.cos(x1) * math.cos(x2) * math.pow(math.sin(Deltay / 2), 2)
+        a = math.pow(math.sin(Deltax/2), 2) + math.cos(x1) * math.cos(x2)
+        a = a * math.pow(math.sin(Deltay / 2), 2)
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
         distance = 6371 * c
         deltabearing = bearing - float(GPS[4])
@@ -160,7 +151,6 @@ class ASYS:
         ObjectiveDistance = distance
         calc = (deltabearing, distance)
         return calc
-
 
     def Watch(self):
         print("Watch mode set.")
@@ -174,12 +164,10 @@ class ASYS:
                 SMS = SMS[SMS.find(IDText):len(SMS)]
                 return SMS
                 break
-            if count = 31:          #Returns to Stand By Position every 10 min
+            if count == 31:         # Returns to Stand By Position every 10 min
                 ASYS.StandBy(self)
                 count = 0
             time.sleep(20)
-
-
 
     def SMS(self):
         print("Setting Watch mode.")
@@ -212,7 +200,6 @@ class ASYS:
         else:
             print("ERROR: Goal Coordinates not in operation Range!")
 
-
     def RTBCheck(self):
         Command = False
         SMS = ASYS.SerialCOM(self, "AT+CMGL=\"REC UNREAD\"")
@@ -222,23 +209,21 @@ class ASYS:
             Command = True
         return Command
 
-
     def RTB(self):                     # Return to Base
         global Coords
-        Coords = (47.123442, 8.775506) # coordinates of the catamaran's base
+        Coords = (47.123442, 8.775506)  # coordinates of the catamaran's base
         print("Base coordinates set.\nInitiating approach.")
         ASYS.EXEC(self)
         print("Catamaran arrived at base.")
         print("Autonomous System shutting down.")
 
-
     def StandBy(self):                 # StandBy at the middle of the lake
         global Coords
-        Coords = (47.120697, 8.786875) # coordinates of the middle of the lake
+        Coords = (47.120697, 8.786875)  # coordinates of the middle of the lake
         print("Stand-By coordinates set.\nInitiating approach.")
         ASYS.EXEC(self)
 
 
-#Launch
+# Launch
 
 ASYS()
