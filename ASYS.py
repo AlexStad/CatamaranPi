@@ -90,7 +90,6 @@ class ASYS:
                 print("Attemting to restart.")
             print("Bearing Delta: \t", Calc[0], "deg")
             print("Distance: \t", Calc[1], "km\n")
-            time.sleep(20)
 
     def PrelaunchChecks(self):
         while "OK" not in ASYS.SerialCOM(self, "AT"):   # General COM Check
